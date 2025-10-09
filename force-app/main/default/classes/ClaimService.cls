@@ -7,7 +7,7 @@ public with sharing class ClaimService {
     
     // Approval thresholds
     private static final Decimal AUTO_APPROVE_THRESHOLD = 5000;
-    private static final Decimal MANAGER_APPROVE_THRESHOLD = 25000;
+    private static final Decimal MANAGER_APPROVE_THRESHOLD = 25000; 
     
     /**
      * Assign approval level based on claim amount
