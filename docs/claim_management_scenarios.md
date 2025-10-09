@@ -1,107 +1,125 @@
 
-# 📄 Salesforce Claim Management – Business Scenarios
+# Claim Management System – Business Scenarios for Salesforce Development
 
-This document outlines practical business scenarios for an Insurance Claim Management System. These scenarios can be used to design, implement, and test functionality using GitHub Copilot and Salesforce development tools.
-
----
-
-## 🧠 Scenario 1: Auto-Approval of Low-Value Claims
-
-### Business Rule:
-If a claim amount is less than ₹5,000 and has no history of fraud or multiple claims, it should be auto-approved.
-
-### Acceptance Criteria:
-- Claim is approved automatically without human intervention.
-- Approval level is set to "System Auto-Approval".
+This document outlines real-world business scenarios to implement and test in your Salesforce-based Claim Management application.
 
 ---
 
-## 🧠 Scenario 2: Manager Review for Mid-Value Claims
+## Scenario 1: Auto-Assignment of Claims Based on Region
 
-### Business Rule:
-If the claim amount is between ₹5,000 and ₹25,000, assign the claim to a Claim Manager for manual review.
+### Description:
+When a new claim is submitted, it should be automatically assigned to a Claims Agent based on the region of the incident.
 
-### Acceptance Criteria:
-- Approval level is set to "Claim Manager".
-- Notification is sent to manager group.
-
----
-
-## 🧠 Scenario 3: Senior Manager Approval for High-Value Claims
-
-### Business Rule:
-If the claim amount exceeds ₹25,000, the claim must be reviewed and approved by a Senior Manager.
-
-### Acceptance Criteria:
-- Claim status is set to "Pending Senior Approval".
-- Approval level is "Senior Manager".
-- Notification to Senior Manager and audit logging required.
+### Implementation Hints:
+- Create a mapping between region and agent.
+- Use Apex Trigger or Flow to auto-assign agent.
+- Update `AssignedAgent__c` field on the Claim__c record.
 
 ---
 
-## 🧠 Scenario 4: Claim Rejection Due to Incomplete Documentation
+## Scenario 2: Escalate Claim After 5 Days Without Action
 
-### Business Rule:
-If required documents like FIR, medical report, or policy documents are missing, reject the claim.
+### Description:
+If a claim is not moved to “Under Review” or “Approved” status within 5 days of creation, it should be escalated to a supervisor.
 
-### Acceptance Criteria:
-- Claim status is updated to "Rejected".
-- Rejection reason is captured.
-- Claimant is notified via email.
-
----
-
-## 🧠 Scenario 5: Duplicate Claims Detection
-
-### Business Rule:
-If a policyholder submits more than one claim with the same incident description and date, flag it as duplicate.
-
-### Acceptance Criteria:
-- Claim is flagged as "Potential Duplicate".
-- Internal fraud team is notified.
-- Claim is not auto-approved.
+### Implementation Hints:
+- Use a Scheduled Apex job or Flow.
+- Filter records in “New” status older than 5 days.
+- Update status to “Escalated” and notify supervisor.
 
 ---
 
-## 🧠 Scenario 6: Bulk Validation of Claims for Scheduled Job
+## Scenario 3: Claim Auto-Closure After 30 Days of Inactivity
 
-### Business Rule:
-Every night, a scheduled job validates all "New" claims and updates their status to "Under Review" if they pass basic checks.
+### Description:
+If a claim remains in “Pending Documents” status for more than 30 days, auto-close the claim.
 
-### Acceptance Criteria:
-- Bulk Apex job runs nightly.
-- Claim statuses are updated in batch.
-- Any failures are logged and retried.
-
----
-
-## 🧠 Scenario 7: Payment Processing After Claim Approval
-
-### Business Rule:
-Once a claim is approved, initiate the payment process using a third-party payment gateway.
-
-### Acceptance Criteria:
-- Integration callout to payment service is made.
-- Claim status updated to "Paid" on success.
-- Failure is logged and retried via queueable Apex.
+### Implementation Hints:
+- Use Apex batch or scheduled Flow.
+- Track `LastModifiedDate`.
+- Change status to “Closed - No Response”.
 
 ---
 
-## 🧠 Scenario 8: Secure Access to Sensitive Fields
+## Scenario 4: Fraud Detection Flag Based on Claim History
 
-### Business Rule:
-Only users with the "Claim Auditor" permission set can view and edit sensitive fields like ClaimAmount and PayoutDetails.
+### Description:
+If a claimant has submitted more than 3 claims in the last year, or a claim exceeds ₹50,000 shortly after policy activation, flag it for fraud review.
 
-### Acceptance Criteria:
-- Field-level security enforced in Apex and UI.
-- Unauthorized users cannot access sensitive data.
+### Implementation Hints:
+- Use Apex logic in service class.
+- Add boolean field `FlaggedForFraud__c`.
+- Optionally create a related Case for investigation.
 
 ---
 
-## ✅ Usage with Copilot
+## Scenario 5: Dynamic Approval Routing
 
-For each scenario above, you can:
-- Write Apex classes (e.g., `ClaimService`, `ClaimValidator`, `ClaimPaymentProcessor`)
-- Write Triggers and Handlers (e.g., `ClaimTriggerHandler`)
-- Write LWC components (e.g., `claimSummary`)
-- Write Test Classes (e.g., `ClaimServiceTest`)
+### Description:
+Route the claim approval based on the amount:
+- < ₹10,000 → Auto-approved
+- ₹10,000 - ₹50,000 → Claim Manager
+- > ₹50,000 → Regional Manager
+
+### Implementation Hints:
+- Use Apex or Flow to determine approval level.
+- Set `ApprovalLevel__c` picklist.
+- Create Task or Notification for approver.
+
+---
+
+## Scenario 6: Email Notification on Claim Status Change
+
+### Description:
+Send an email to the claimant whenever the claim status changes.
+
+### Implementation Hints:
+- Use Process Builder or Flow with Email Alert.
+- Include claim number and new status in the email body.
+
+---
+
+## Scenario 7: Integration with Payment Gateway
+
+### Description:
+When a claim is approved, initiate payout using an external REST API and mark status as “Paid” upon success.
+
+### Implementation Hints:
+- Use `@future` or `Queueable` Apex for HTTP callout.
+- Update status field and log transaction details.
+
+---
+
+## Scenario 8: Validation on Claim Submission
+
+### Description:
+Prevent submission of claims without a valid policy, missing mandatory documents, or if policy is inactive.
+
+### Implementation Hints:
+- Validate using Apex before insert.
+- Throw custom exception with proper error message.
+
+---
+
+## Scenario 9: Claim Summary Dashboard for Agents
+
+### Description:
+Create a Lightning Web Component dashboard that shows:
+- Number of open claims
+- Total amount under review
+- List of recently submitted claims
+
+### Implementation Hints:
+- Use Apex controller to fetch data.
+- Display in LWC using lightning-datatable and chart.
+
+---
+
+## Scenario 10: Generate PDF Report of Claim Details
+
+### Description:
+Allow users to generate a PDF report of the claim and download it from the UI.
+
+### Implementation Hints:
+- Use LWC + Apex to generate report.
+- Use `PageReference` + `ContentVersion` or third-party PDF service.
